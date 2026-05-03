@@ -19,49 +19,35 @@ Practice project for the Epic Learn course: a small **FastAPI** backend that exp
 ## Setup
 
 1. **Clone or open this folder** in your editor.
-
 2. **Create a virtual environment** (recommended):
-
-   ```bash
+  ```bash
    python -m venv .venv
-   ```
-
+  ```
    Activate it:
-
-   - **Windows (cmd):** `.venv\Scripts\activate`
-   - **Windows (PowerShell):** `.venv\Scripts\Activate.ps1`
-   - **macOS / Linux:** `source .venv/bin/activate`
-
+  - **Windows (cmd):** `.venv\Scripts\activate`
+  - **Windows (PowerShell):** `.venv\Scripts\Activate.ps1`
+  - **macOS / Linux:** `source .venv/bin/activate`
 3. **Install dependencies:**
-
-   ```bash
+  ```bash
    pip install -r requirements.txt
-   ```
-
+  ```
 4. **Configure environment variables**
-
-   Copy the example file and edit values for your machine:
-
-   ```bash
-   cp .env.example .env
-   ```
-
+  Copy the example file and edit values for your machine:
    Set at least `DATABASE_URL` to your PostgreSQL connection string, for example:
-
-   ```env
-   DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/ecommerce
-   ```
-
    The app rewrites `postgresql://` to `postgresql+psycopg2://` for SQLAlchemy automatically.
-
    Optional:
-
-   - `SECRET_KEY` — used for security helpers in `core/security.py`
-   - `ACCESS_TOKEN_EXPIRE_MINUTES` — defaults to `60`
+  - `SECRET_KEY` — used for security helpers in `core/security.py`
+  - `ACCESS_TOKEN_EXPIRE_MINUTES` — defaults to `60`
 
 ## Run the project
 
-From the project root (with the virtual environment activated and `.env` present):
+From the project root (with the virtual environment activated and `.env` present), use the **FastAPI CLI** (reload and file watching are enabled by default in development):
+
+```bash
+fastapi dev
+```
+
+Equivalent with `uvicorn` directly:
 
 ```bash
 uvicorn main:app --reload
@@ -69,9 +55,9 @@ uvicorn main:app --reload
 
 Then open:
 
-- **API root:** http://127.0.0.1:8000/
-- **Interactive docs (Swagger):** http://127.0.0.1:8000/docs
-- **Alternative docs (ReDoc):** http://127.0.0.1:8000/redoc
+- **API root:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- **Interactive docs (Swagger):** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Alternative docs (ReDoc):** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ### Example: PostgreSQL with Docker
 
@@ -89,14 +75,16 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ecommerce
 
 ## API overview
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/` | Health message |
-| `GET` | `/health/db` | Checks database connectivity (`SELECT 1`) |
-| `GET` | `/users/` | Sample list of users |
-| `GET` | `/users/{user_id}` | Sample user by id |
-| `POST` | `/users/` | Query param `name` — sample create response |
-| `DELETE` | `/users/{user_id}` | Sample delete response |
+
+| Method   | Path               | Description                                 |
+| -------- | ------------------ | ------------------------------------------- |
+| `GET`    | `/`                | Health message                              |
+| `GET`    | `/health/db`       | Checks database connectivity (`SELECT 1`)   |
+| `GET`    | `/users/`          | Sample list of users                        |
+| `GET`    | `/users/{user_id}` | Sample user by id                           |
+| `POST`   | `/users/`          | Query param `name` — sample create response |
+| `DELETE` | `/users/{user_id}` | Sample delete response                      |
+
 
 ## Project structure
 
