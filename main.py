@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends
-from routes import users
+from routes import users, auth, product
 
 from core.database import Base, engine, get_db
 from sqlalchemy import text
@@ -8,6 +8,8 @@ from sqlalchemy import text
 app = FastAPI()
 
 app.include_router(users.router)
+app.include_router(auth.router)
+app.include_router(product.router)
 
 @app.get("/")
 def home():
