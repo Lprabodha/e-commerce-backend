@@ -17,15 +17,37 @@ def register(body: RegisterRequest, db=Depends(get_db)):
     if "@" not in body.email or "." not in body.email.split("@")[-1]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please enter a valid email"
+            detail="Please enter a valid email",
         )
-        
-    existing_email = db.scalar(select(User).where(User.email == body.email.lower()))
-    
-    if existing_email:
+
+    existing = db.scalar(select(User).where(User.email == body.email.lower()))
+    if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This email is already registered"
+            detail="This email is already registered",
+        )
+
+    user = User(
+        email=body.email.lower().strip(),
+        hashed_password=hash_password(body.password),
+        role="customer",
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@router.post("/login", response_model=TokenResponse)
+def login(body: LoginRequest, db=Depends(get_db)):
+    
+    user = db.scalar(select(User).where(User.email == body.email.lower().strip()))
+    
+    if user is None or not verify_password(body.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Wrong email or password"
         )
         
-    
+    token = create_access_token(user.id, user.role)
+    return TokenResponse(access_token=token)
+

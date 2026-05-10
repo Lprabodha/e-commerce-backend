@@ -1,34 +1,36 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, status
 from fastapi import HTTPException
+
+from schemas.auth import UserResponse
+from models.user import User
+from core.database import get_db
+from sqlalchemy import select
+
+from core.deps import get_current_user, require_admin
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.get("/")
-def get_users():
-    
-    users_list = [
-        {"id": 1, "name": "Nimal"},
-        {"id": 2, "name": "kamal"},
-        {"id": 3, "name": "Dilan"},
-    ]
-    
-    return users_list
+@router.get("/me", response_model=UserResponse)
+def read_me(user:User = Depends(get_current_user)):
+    return user
 
-@router.get("/{user_id}")
-def get_user(user_id: int):
-    
-    if user_id <= 0:
-        raise HTTPException(status_code=400, detail="Invalid User ID")
-    
-    if user_id > 10:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {"user_id": user_id}
+@router.get("/", response_model=list[UserResponse])
+def list_users(_admin: User = Depends(require_admin), db=Depends(get_db)):
+    users = db.scalars(select(User).order_by(User.id)).all()
+    return users
 
-@router.post("/")
-def create_user(name: str):
-    return {"message": f"User {name} created"}
-
-@router.delete("/{user_id}")
-def delete_user(user_id : int):
-    return {"message" : f"User {user_id} deleted"}
+@router.get("/{user_id}", response_model=UserResponse)
+def read_user(
+    user_id: int,
+    user: User = Depends(get_current_user),
+    db=Depends(get_db)
+):
+    
+    if user.role != "admin" and user.id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own profile")
+    
+    user = db.scalar(select(User).where(User.id == user_id))
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    return user
