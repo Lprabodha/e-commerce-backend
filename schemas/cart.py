@@ -16,3 +16,4 @@ class CartResponse(BaseModel):
     cart_id: int
     items: list[CartLineResponse]
     total: Decimal
+    
