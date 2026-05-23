@@ -11,6 +11,15 @@ class ProductCreate(BaseModel):
     category: str | None = None
     is_active: bool = True
     
+class ProductUpdate(BaseModel):
+    
+    name: str = Field(min_length=1, max_length=200)
+    description: str | None = None
+    price : Decimal = Field(gt=0)
+    stock: int = Field(gt=0)
+    category: str | None = None
+    is_active: bool = True
+    
     
 class ProductResponse(BaseModel):
     id: int
@@ -20,4 +29,12 @@ class ProductResponse(BaseModel):
     stock: int
     category: str| None
     is_active : bool
+    
+    model_config = {"from_attributes": True}
+    
+class ProductListResponse(BaseModel):
+    items: list[ProductResponse]
+    total: int
+    skip: int
+    limit: int
     
