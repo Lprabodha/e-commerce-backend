@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends
-from routes import users, auth, product, cart
+from routes import users, auth, product, cart, orders, chat
 
 from core.database import Base, engine, get_db
 from sqlalchemy import text
@@ -11,6 +11,8 @@ app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(product.router)
 app.include_router(cart.router)
+app.include_router(orders.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def home():
