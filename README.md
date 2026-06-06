@@ -1,109 +1,176 @@
 # E-commerce Backend API
 
-**Python + AI Master Course — Epic Learn**
+Python + AI Master Course project using FastAPI, SQLAlchemy, PostgreSQL, JWT auth, cart and order flows, plus a Hugging Face powered catalog chat assistant.
 
-Practice project for the Epic Learn course: a small **FastAPI** backend that exposes REST endpoints for an e-commerce style API, with PostgreSQL configured via environment variables.
+## Features
 
-## What you will practice
+- JWT authentication with register and login
+- Role-aware routes (customer and admin)
+- Product catalog CRUD
+- Cart management and checkout
+- Order listing, detail, and status updates
+- Chat assistant grounded on active products in the database
+- Alembic migrations
 
-- FastAPI routes and JSON responses
-- Project layout (`core/`, `routes/`, `models/`, `schemas/`)
-- SQLAlchemy database setup (PostgreSQL + `psycopg2`)
-- Environment-based configuration with `.env`
+## Tech stack
+
+- FastAPI
+- SQLAlchemy
+- PostgreSQL with psycopg2
+- Alembic
+- Hugging Face Inference API via huggingface_hub
 
 ## Requirements
 
-- Python 3.10+ (3.12 recommended)
-- A **PostgreSQL** database (local install, cloud, or Docker)
+- Python 3.10+
+- PostgreSQL
 
 ## Setup
 
-1. **Clone or open this folder** in your editor.
-2. **Create a virtual environment** (recommended):
-  ```bash
-   python -m venv .venv
-  ```
-   Activate it:
-  - **Windows (cmd):** `.venv\Scripts\activate`
-  - **Windows (PowerShell):** `.venv\Scripts\Activate.ps1`
-  - **macOS / Linux:** `source .venv/bin/activate`
-3. **Install dependencies:**
-  ```bash
-   pip install -r requirements.txt
-  ```
-4. **Configure environment variables**
-  Copy the example file and edit values for your machine:
-   Set at least `DATABASE_URL` to your PostgreSQL connection string, for example:
-   The app rewrites `postgresql://` to `postgresql+psycopg2://` for SQLAlchemy automatically.
-   Optional:
-  - `SECRET_KEY` — used for security helpers in `core/security.py`
-  - `ACCESS_TOKEN_EXPIRE_MINUTES` — defaults to `60`
+1. Create and activate a virtual environment.
 
-## Run the project
+```bash
+python -m venv venv
+source venv/Scripts/activate
+```
 
-From the project root (with the virtual environment activated and `.env` present), use the **FastAPI CLI** (reload and file watching are enabled by default in development):
+2. Install dependencies.
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Create your env file.
+
+```bash
+cp .env.example .env
+```
+
+If you are on Windows cmd, use:
+
+```bash
+copy .env.example .env
+```
+
+4. Edit .env values.
+
+Required values:
+
+- DATABASE_URL
+- SECRET_KEY
+- HF_API_TOKEN
+
+Optional values:
+
+- ACCESS_TOKEN_EXPIRE_MINUTES, default 60
+- HF_CHAT_MODEL, default deepseek-ai/DeepSeek-V4-Pro
+- HF_CHAT_URL, default https://router.huggingface.co/v1/chat/completions
+
+Example:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ecommerce
+SECRET_KEY=replace-with-a-long-random-secret
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+HF_API_TOKEN=hf_xxx
+HF_CHAT_MODEL=deepseek-ai/DeepSeek-V4-Pro
+HF_CHAT_URL=https://router.huggingface.co/v1/chat/completions
+```
+
+Note: the app automatically rewrites DATABASE_URL from postgresql:// to postgresql+psycopg2:// for SQLAlchemy.
+
+## Database migrations
+
+Run migrations after setting DATABASE_URL:
+
+```bash
+alembic upgrade head
+```
+
+Create a new migration:
+
+```bash
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+```
+
+## Run the app
 
 ```bash
 fastapi dev
 ```
 
-Equivalent with `uvicorn` directly:
+Alternative:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Then open:
+Open:
 
-- **API root:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- **Interactive docs (Swagger):** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **Alternative docs (ReDoc):** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+- API root: http://127.0.0.1:8000/
+- Swagger UI: http://127.0.0.1:8000/docs
+- ReDoc: http://127.0.0.1:8000/redoc
 
-### Example: PostgreSQL with Docker
+## API routes
 
-If you use Docker and want a quick database:
+| Method | Path                      | Description                    |
+| ------ | ------------------------- | ------------------------------ |
+| GET    | /                         | API status message             |
+| GET    | /health/db                | Database connectivity check    |
+| POST   | /auth/register            | Register a customer account    |
+| POST   | /auth/login               | Login and get access token     |
+| GET    | /users/me                 | Current authenticated user     |
+| GET    | /users/                   | List users, admin only         |
+| GET    | /users/{user_id}          | User profile, owner or admin   |
+| POST   | /products                 | Create product, admin only     |
+| GET    | /products                 | List active products           |
+| GET    | /products/{product_id}    | Get active product by id       |
+| PUT    | /products/{product_id}    | Update product, admin only     |
+| DELETE | /products/{product_id}    | Delete product, admin only     |
+| GET    | /cart                     | Read current user cart         |
+| POST   | /cart/items               | Add item to cart               |
+| DELETE | /cart/items/{product_id}  | Remove cart item               |
+| POST   | /cart/checkout            | Checkout cart and create order |
+| GET    | /orders/me                | List current user orders       |
+| GET    | /orders/{order_id}        | Order detail, owner or admin   |
+| PATCH  | /orders/{order_id}/status | Update status, admin only      |
+| POST   | /chat                     | Chat with catalog assistant    |
 
-```bash
-docker run -d --name epic-ecom-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=ecommerce -p 5432:5432 postgres:16-alpine
+## Chat endpoint
+
+The chat assistant uses only active products from your database as context. If there are no active products, it returns a fallback reply.
+
+Request body for POST /chat:
+
+```json
+{
+  "customer_message": "I need a budget wireless mouse"
+}
 ```
 
-Use in `.env`:
+Response:
 
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ecommerce
+```json
+{
+  "reply": "Hello! ..."
+}
 ```
 
-## API overview
-
-
-| Method   | Path               | Description                                 |
-| -------- | ------------------ | ------------------------------------------- |
-| `GET`    | `/`                | Health message                              |
-| `GET`    | `/health/db`       | Checks database connectivity (`SELECT 1`)   |
-| `GET`    | `/users/`          | Sample list of users                        |
-| `GET`    | `/users/{user_id}` | Sample user by id                           |
-| `POST`   | `/users/`          | Query param `name` — sample create response |
-| `DELETE` | `/users/{user_id}` | Sample delete response                      |
-
+If HF_API_TOKEN is missing, the route returns 503 with a clear message.
 
 ## Project structure
 
-```
+```text
 e-commerce-backend/
-├── main.py              # FastAPI app entry
-├── requirements.txt
-├── .env.example         # Copy to .env
-├── core/
-│   ├── config.py        # Settings from environment
-│   ├── database.py      # SQLAlchemy engine and sessions
-│   └── security.py
-├── routes/
-│   └── users.py         # User routes
-├── models/
-├── schemas/
-└── README.md
+  alembic/
+  core/
+  models/
+  routes/
+  schemas/
+  services/
+  main.py
+  requirements.txt
+  .env.example
+  README.md
 ```
-
-## Epic Learn
-
-This repository is part of the **Python + AI Master Course** at **Epic Learn** — use it to experiment, extend routes, connect real models to the database, and build toward a full e-commerce backend.
