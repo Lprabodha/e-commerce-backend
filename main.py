@@ -1,11 +1,21 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from routes import users, auth, product, cart, orders, chat
 
 from core.database import Base, engine, get_db
+from core.config import CORS_ORIGINS
 from sqlalchemy import text
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(users.router)
 app.include_router(auth.router)
